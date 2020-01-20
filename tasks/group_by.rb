@@ -36,7 +36,7 @@ class GroupBy < TaskHelper
       group_array << { name: group_name_prefix + name.downcase,
                        targets: group }
     end
-    group_array
+    group_array.sort_by { |h| h[:name] }
   end
 
   def task(opts)
