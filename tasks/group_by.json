@@ -1,0 +1,19 @@
+{
+  "description": "Groups Targets by a given field/property/key on the TargetSpec objects.",
+  "files": ["ruby_task_helper/files/task_helper.rb"],
+  "input_method": "stdin",
+  "parameters": {
+    "group_name_prefix": {
+      "description" : "Prefix to add to all group names that we output",
+      "type": "Optional[String[1]]"
+    },
+    "key": {
+      "description" : "Dot separated key to group by",
+      "type": "String[1]"
+    },
+    "targets": {
+      "description" : "List of targets",
+      "type": "Array[Hash]"
+    }
+  }
+}
