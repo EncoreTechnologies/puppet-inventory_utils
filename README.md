@@ -21,67 +21,50 @@ Briefly tell users why they might want to use your module. Explain what your mod
 
 This should be a fairly short description helps the user decide if your module is what they want.
 
-## Setup
-
-### What inventory_utils affects **OPTIONAL**
-
-If it's obvious what your module touches, you can skip this section. For example, folks can probably figure out that your mysql_instance module affects their MySQL instances.
-
-If there's more that they should know about, though, this is the place to mention:
-
-* Files, packages, services, or operations that the module will alter, impact, or execute.
-* Dependencies that your module automatically installs.
-* Warnings or other important notices.
-
-### Setup Requirements **OPTIONAL**
-
-If your module requires anything extra before setting up (pluginsync enabled, another module, etc.), mention it here.
-
-If your most recent release breaks compatibility or requires particular steps for upgrading, you might want to include an additional "Upgrading" section here.
-
-### Beginning with inventory_utils
-
-The very basic steps needed for a user to get the module up and running. This can include setup steps, if necessary, or it can be an example of the most basic use of the module.
 
 ## Usage
 
-Include usage examples for common use cases in the **Usage** section. Show your users how to use your module to solve problems, and be sure to include code examples. Include three to five examples of the most important or common tasks a user can accomplish with your module. Show users how to accomplish more complex tasks that involve different types, classes, and functions working in tandem.
+### inventory_utils::erb_template
 
-## Reference
+Below is an inventory file that uses an ERB template to query PuppetDB for nodes that haven't
+reported in, or haven't reported in within the last `3` hours (`3*60*60`).
 
-This section is deprecated. Instead, add reference information to your code as Puppet Strings comments, and then use Strings to generate a REFERENCE.md in your module. For details on how to add code comments and generate documentation with Strings, see the Puppet Strings [documentation](https://puppet.com/docs/puppet/latest/puppet_strings.html) and [style guide](https://puppet.com/docs/puppet/latest/puppet_strings_style.html)
-
-If you aren't ready to use Strings yet, manually create a REFERENCE.md in the root of your module directory and list out each of your module's classes, defined types, facts, functions, Puppet tasks, task plans, and resource types and providers, along with the parameters for each.
-
-For each element (class, defined type, function, and so on), list:
-
-  * The data type, if applicable.
-  * A description of what the element does.
-  * Valid values, if the data type doesn't make it obvious.
-  * Default value, if any.
-
-For example:
-
-```
-### `pet::cat`
-
-#### Parameters
-
-##### `meow`
-
-Enables vocalization in your cat. Valid options: 'string'.
-
-Default: 'medium-loud'.
+``` yaml
+version: 2
+groups:
+  - name: puppetdb_unreported
+    targets:
+      - _plugin: puppetdb
+        query:
+          _plugin: task
+          task: inventory_utils::erb_template
+          parameters:
+            template: 'nodes[certname] { (report_timestamp is null) or (report_timestamp < "<%= (Time.now - (3*60*60)).iso8601 %>") }'
 ```
 
-## Limitations
+### inventory_utils::group_by
 
-In the Limitations section, list any incompatibilities, known issues, or other warnings.
+Below is an inventory file that uses the Group By to query PuppetDB and create groups
+based on their `wsus_target_group` fact.
 
-## Development
+``` yaml
+version: 2
+groups:
+  - name: puppetdb_wsus
+    groups:
+      - _plugin: task
+        task: inventory_utils::group_by
+        parameters:
+          key: 'facts.wsus_target_group'
+          group_name_prefix: puppetdb_wsus_
+          targets:
+            _plugin: puppetdb
+            query: "inventory[certname, facts.wsus_target_group] { facts.osfamily = 'windows' and facts.wsus_target_group is not null}"
+            target_mapping:
+              name: certname
+              facts:
+                wsus_target_group: facts.wsus_target_group
+              features:
+                - facts.wsus_target_group
+```
 
-In the Development section, tell other users the ground rules for contributing to your project and how they should submit their work.
-
-## Release Notes/Contributors/Etc. **Optional**
-
-If you aren't using changelog, put your release notes here (though you should consider using changelog). You can also add any additional sections you feel are necessary or important to include here. Please use the `## ` header.
