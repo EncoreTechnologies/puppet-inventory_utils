@@ -19,12 +19,7 @@ class GroupBy < TaskHelper
 
     group_hash = {}
     targets.each do |t|
-      group_name = t.dig(*key_list)
-      unless group_name
-        t_json = JSON.parse(t.to_json)
-        raise TaskHelper::Error.new "Unable to find key '#{key}' in target: #{t_json}",
-                                    'bad_key'
-      end
+      group_name = t.dig(*key_list) || 'null'
       unless group_hash.key?(group_name)
         group_hash[group_name] = []
       end
