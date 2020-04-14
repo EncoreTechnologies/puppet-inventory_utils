@@ -11,6 +11,8 @@ require_relative task_helper
 
 # Retrieves hosts from the WSUS SQL server
 class GroupBy < TaskHelper
+  NAME_REGEX = %r{[^a-z0-9_]}
+
   def resolve_reference(opts)
     key = opts[:key]
     targets = opts[:targets]
@@ -20,6 +22,7 @@ class GroupBy < TaskHelper
     group_hash = {}
     targets.each do |t|
       group_name = t.dig(*key_list) || 'null'
+      group_name = normalize_group_name(group_name)
       unless group_hash.key?(group_name)
         group_hash[group_name] = []
       end
@@ -32,6 +35,11 @@ class GroupBy < TaskHelper
                        targets: group }
     end
     group_array.sort_by { |h| h[:name] }
+  end
+
+  def normalize_group_name(name)
+    name.downcase!
+    name.gsub(NAME_REGEX, '_')
   end
 
   def task(opts)
