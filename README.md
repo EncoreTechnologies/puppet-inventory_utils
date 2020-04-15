@@ -1,5 +1,12 @@
 # inventory_utils
 
+[![Build Status](https://travis-ci.org/EncoreTechnologies/puppet-inventory_utils.svg?branch=master)](https://travis-ci.org/EncoreTechnologies/puppet-inventory_utils)
+[![Puppet Forge Version](https://img.shields.io/puppetforge/v/encore/inventory_utils.svg)](https://forge.puppet.com/encore/inventory_utils)
+[![Puppet Forge Downloads](https://img.shields.io/puppetforge/dt/encore/inventory_utils.svg)](https://forge.puppet.com/encore/inventory_utils)
+[![Puppet Forge Score](https://img.shields.io/puppetforge/f/encore/inventory_utils.svg)](https://forge.puppet.com/encore/inventory_utils)
+[![Puppet PDK Version](https://img.shields.io/puppetforge/pdk-version/encore/inventory_utils.svg)](https://forge.puppet.com/encore/inventory_utils)
+[![puppetmodule.info docs](http://www.puppetmodule.info/images/badge.png)](http://www.puppetmodule.info/m/encore-inventory_utils)
+
 ## Description
 
 Module that contains a lot of helpful Bolt tasks designed for use in dynamic inventory files.
