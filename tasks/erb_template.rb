@@ -9,7 +9,10 @@ task_helper = [
 raise 'Could not find the Bolt ruby_task_helper' if task_helper.nil?
 require_relative task_helper
 require 'erb'
+require 'json'
+require 'socket'
 require 'time'
+require 'yaml'
 
 # makes a private context for the variables passed in on the command line
 class ErbSandbox
@@ -26,11 +29,20 @@ end
 # Retrieves hosts from the WSUS SQL server
 class ErbTemplateTask < TaskHelper
   def resolve_reference(opts)
+    parse = opts[:parse]
     template = opts[:template]
     variables = opts[:variables] || {}
     sandbox = ErbSandbox.new(variables)
     renderer = ERB.new(template)
-    renderer.result(sandbox.public_binding)
+    result = renderer.result(sandbox.public_binding)
+    case parse
+    when 'json'
+      JSON.parse(result)
+    when 'yaml'
+      YAML.safe_load(result)
+    else
+      result
+    end
   end
 
   def task(opts)

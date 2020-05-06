@@ -3,6 +3,10 @@
   "files": ["ruby_task_helper/files/task_helper.rb"],
   "input_method": "stdin",
   "parameters": {
+    "parse": {
+      "description": "Attempt to parse the result of the template as YAML, JSON, etc. This is useful, for example, if you want to use this template to generate structured output as part of your inventory.yaml to say generate a list of hosts. By default, we do NOT attempt to parse the output of the rendered template and smiply return the raw results.",
+      "type": "Optional[Enum['json', 'yaml']]"
+    },
     "template": {
       "description": "An ERB template string that will be rendered and returned. TODO make this an arbitrary 'data' type (hashes/arrays) that can be rendered recursively.",
       "type": "String"
