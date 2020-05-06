@@ -2,7 +2,7 @@
 
 All notable changes to this project will be documented in this file.
 
-## Development
+## Release 0.2.0 (2020-05-06)
 
 **Features**
 
@@ -12,11 +12,6 @@ All notable changes to this project will be documented in this file.
   lists of hosts in a range.
   
   Contributed by Nick Maludy (@nmaludy)
-
-**Bugfixes**
-
-**Known Issues**
-
 
 ## Release 0.1.0
 
