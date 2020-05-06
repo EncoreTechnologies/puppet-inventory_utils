@@ -62,6 +62,52 @@ groups:
 This allows for some cool things, for example we could have another plugin that populates
 the variables value and chain them together to then generate the PuppetDB query.
 
+### inventory_utils::erb_template - Creating hosts ranges
+
+Sometimes it's necessary to generate a list of hosts based on a range of numbers.
+We can use ERB templating to help solve this problem. The ERB templates can be
+used to generate YAML data, then parse that YAML and return the structured results
+as the output of the plugin. To accomplish this, you can use the `parse` parameter
+setting it to `parse: yaml` to tell the ERB templating task to parse the rendered
+template as YAML (you can also use `parse: json` if you prefer to render JSON inside
+of ERB).
+
+Below is an example inventory of generating a list of hosts of the pattern 
+`web[00-10].domain.tld`:
+
+``` yaml
+version: 2
+groups:
+ - name: hosts_range
+   targets:
+     _plugin: task
+     task: inventory_utils::erb_template
+     parameters:
+       parse: yaml
+       template: |
+         <% (0..10).each do |num| %>
+         - web<%= '%02d' % num %>.domain.tld
+         <% end %>
+```
+
+This results in the following hosts list in the inventory:
+
+```shell
+$ bolt inventory show --targets hosts_range
+web00.domain.tld
+web01.domain.tld
+web02.domain.tld
+web03.domain.tld
+web04.domain.tld
+web05.domain.tld
+web06.domain.tld
+web07.domain.tld
+web08.domain.tld
+web09.domain.tld
+web10.domain.tld
+11 targets
+```
+
 ### inventory_utils::group_by
 
 This task takes a list of targets as input, potentially from another Bolt plugin, and
