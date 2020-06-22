@@ -120,13 +120,13 @@ Target Data:
 ```
 - name: hostname1.domain.tld
   facts:
-    mycoolfact: value_a
+    mycoolfact: group_a
 - name: hostname2.domain.tld
   facts:
-    mycoolfact: value_b
+    mycoolfact: group_b
 - name: hostname3.domain.tld
   facts:
-    mycoolfact: value_a
+    mycoolfact: group_a
 ```
 
 Key: `facts.mycoolfact`
@@ -137,19 +137,19 @@ be appended.
 
 Returned data:
 ``` yaml
-- name: value_a
+- name: group_a
   targets:
     - name: hostname1.domain.tld
       facts:
-        mycoolfact: value_a
+        mycoolfact: group_a
     - name: hostname3.domain.tld
       facts:
-        mycoolfact: value_a
+        mycoolfact: group_a
 - name: value_b
   targets:
     - name: hostname2.domain.tld
       facts:
-        mycoolfact: value_b
+        mycoolfact: group_b
 ```
 
 Below is an inventory file that uses `inventory_utils::group_by` to query PuppetDB and create groups
@@ -176,3 +176,115 @@ groups:
                 - facts.wsus_target_group
 ```
 
+
+#### Setting configuration options on a group
+
+Below is an inventory file that uses `inventory_utils::group_by` to query PuppetDB and create groups
+based on their `domain` fact. It then sets configuration options based on the group
+name. In this case we want a different username to use when logging into these Windows host
+based on the domain that the machine is in.
+
+``` yaml
+version: 2
+groups:
+  - name: puppetdb_ad
+    groups:
+      - _plugin: task
+        task: inventory_utils::group_by
+        parameters:
+          key: 'facts.domain'
+          group_configs:
+            puppetdb_ad_ad1_domain_tld:
+              config:
+                winrm:
+                  user: some_special_user@ad1.domain.tld
+            puppetdb_ad_ad2_domain_tld:
+              config:
+                winrm:
+                  user: some_special_user@ad2.domain.tld
+          group_name_prefix: puppetdb_ad_
+          targets:
+            _plugin: puppetdb
+            query: "inventory[certname, facts.domain] { facts.osfamily = 'windows' }"
+            target_mapping:
+              name: certname
+              facts:
+                domain: facts.domain
+              features:
+                - facts.ad_domain
+```
+
+Only the following keys can be specified in the `group_configs` hash:
+ - `config`
+ - `facts`
+ - `features`
+ - `vars`
+
+
+### inventory_utils::group_configs
+
+In certain scenarios you maybe already have a list of groups returned from another
+Bolt inventory plugin. You may want to take those groups and assign `config` or `vars`, etc
+to those groups by name, this is exactly what `inventory_utils::group_configs` is meant for.
+
+Below the `some_group_returning_plugin` is expeted to return a list of groups.
+Then, `inventory_utils::group_configs` matches those groups, by name, to the keys in 
+the `group_configs` parameter. Finally, it merges the configs hash with the groups hash
+producing a group with configuration options set. on the final group.
+
+``` yaml
+version: 2
+groups:
+  - name: puppetdb_ad
+    groups:
+      - _plugin: task
+        task: inventory_utils::group_configs
+        parameters:
+          group_configs:
+            puppetdb_ad_ad1_domain_tld:
+              config:
+                winrm:
+                  user: some_special_user@ad1.domain.tld
+            puppetdb_ad_ad2_domain_tld:
+              config:
+                winrm:
+                  user: some_special_user@ad2.domain.tld
+          groups:
+            _plugin: some_group_returning_plugin
+            ...
+```
+
+To be consistent with the way that Bolt works, if a user specifies config options "deep"
+in the tree, those options are taken in favor of the "broad" options specified higher up
+in the tree.
+
+Example:
+
+``` yaml
+version: 2
+groups:
+  - name: ad
+    groups:
+      - _plugin: task
+        task: inventory_utils::group_configs
+        parameters:
+          group_configs:
+            ad_ad1_domain_tld:
+              config:
+                winrm:
+                  user: some_special_user@ad1.domain.tld
+                  password: abc123
+          groups:
+            - name: ad_ad1_domain_tld
+              config:
+                winrm:
+                  # this user option is preferred over the one set higher up in the group_configs parameter
+                  user: my_specific_user
+                
+```
+
+Only the following keys can be specified in the `group_configs` hash:
+ - `config`
+ - `facts`
+ - `features`
+ - `vars`

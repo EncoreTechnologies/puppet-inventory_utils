@@ -1,5 +1,5 @@
 {
-  "description": "Groups Targets by a given field/property/key on the TargetSpec objects.",
+  "description": "Merges config data into group objects.",
   "files": ["ruby_task_helper/files/task_helper.rb"],
   "input_method": "stdin",
   "parameters": {
@@ -7,16 +7,8 @@
       "description" : "Hash of group names that map to group configuration settings. After targets are grouped, we merge the value of this hash into the group's data. This allows you to set your own 'config', 'facts', 'features' and 'vars' parameters based on group name.",
       "type": "Optional[ Hash[String, Struct[{Optional[config] => Hash, Optional[facts] => hash, Optional[features] => Array[String],  Optional[vars] => Hash}]] ]"
     },
-    "group_name_prefix": {
-      "description" : "Prefix to add to all group names that we output",
-      "type": "Optional[String[1]]"
-    },
-    "key": {
-      "description" : "Dot separated key to group by",
-      "type": "String[1]"
-    },
-    "targets": {
-      "description" : "List of targets",
+    "groups": {
+      "description" : "List of groups",
       "type": "Array[Hash]"
     }
   }
