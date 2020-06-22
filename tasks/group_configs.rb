@@ -11,35 +11,18 @@ require_relative task_helper
 require 'bolt/util'
 
 # Retrieves hosts from the WSUS SQL server
-class GroupBy < TaskHelper
+class GroupConfigs < TaskHelper
   NAME_REGEX = %r{[^a-z0-9_]}
 
   def resolve_reference(opts)
-    key = opts[:key]
-    targets = opts[:targets]
-    group_name_prefix = opts[:group_name_prefix] || ''
+    groups_array = opts[:groups]
     group_configs = opts[:group_configs] || {}
-    key_list = key.split('.').map { |x| x.to_sym }
 
-    group_hash = {}
-    targets.each do |t|
-      group_name = t.dig(*key_list) || 'null'
-      group_name = normalize_group_name(group_name)
-      unless group_hash.key?(group_name)
-        group_hash[group_name] = []
-      end
-      group_hash[group_name] << t
+    groups = groups_array.map do |group|
+      name = group[:name]
+      Bolt::Util.deep_merge(group_configs.fetch(name.to_sym, {}), group)
     end
-
-    group_array = []
-    group_hash.each do |name, group|
-      grp_name = group_name_prefix + name.downcase
-      grp = { name: grp_name,
-              targets: group }
-      # deep merge so we can preserve any config options set "deep" in the tree
-      group_array << Bolt::Util.deep_merge(group_configs.fetch(name.to_sym, {}), grp)
-    end
-    group_array.sort_by { |h| h[:name] }
+    groups.sort_by { |h| h[:name] }
   end
 
   def normalize_group_name(name)
@@ -58,5 +41,5 @@ class GroupBy < TaskHelper
 end
 
 if $PROGRAM_NAME == __FILE__
-  GroupBy.run
+  GroupConfigs.run
 end

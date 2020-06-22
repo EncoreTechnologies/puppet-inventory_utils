@@ -1,6 +1,6 @@
 {
   "name": "encore-inventory_utils",
-  "version": "0.2.0",
+  "version": "0.3.0",
   "author": "Encore Technologies",
   "summary": "Module that contains a lot of helpful Bolt tasks designed for use in dynamic inventory files.",
   "license": "Apache-2.0",
