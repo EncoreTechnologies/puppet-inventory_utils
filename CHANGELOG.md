@@ -2,6 +2,13 @@
 
 All notable changes to this project will be documented in this file.
 
+## Release 0.3.1 (2020-09-15)
+
+- Fixed bug in `inventory_utils::group_by` where the `group_configs` option wasn't using
+  the right group name when performing lookups, causing configs to not get merged in.
+  
+  Contributed by Nick Maludy (@nmaludy)
+
 ## Release 0.3.0 (2020-07-22)
 
 - Added a new parameter `group_configs` to the `inventory_utils::group_by` task.
