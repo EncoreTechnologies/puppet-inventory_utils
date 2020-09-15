@@ -37,7 +37,7 @@ class GroupBy < TaskHelper
       grp = { name: grp_name,
               targets: group }
       # deep merge so we can preserve any config options set "deep" in the tree
-      group_array << Bolt::Util.deep_merge(group_configs.fetch(name.to_sym, {}), grp)
+      group_array << Bolt::Util.deep_merge(group_configs.fetch(grp_name.to_sym, {}), grp)
     end
     group_array.sort_by { |h| h[:name] }
   end
