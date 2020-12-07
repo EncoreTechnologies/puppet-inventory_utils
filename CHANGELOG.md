@@ -2,6 +2,12 @@
 
 All notable changes to this project will be documented in this file.
 
+## Development
+
+- Switch from Travis to GitHub Actions
+
+  Contributed by Nick Maludy (@nmaludy)
+
 ## Release 0.3.1 (2020-09-15)
 
 - Fixed bug in `inventory_utils::group_by` where the `group_configs` option wasn't using
