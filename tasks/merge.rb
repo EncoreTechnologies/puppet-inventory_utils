@@ -9,6 +9,7 @@ task_helper = [
 raise 'Could not find the Bolt ruby_task_helper' if task_helper.nil?
 require_relative task_helper
 
+# Task to merge hashes in an inventory file
 class MergeTask < TaskHelper
   def do_deep_merge(hash1, hash2)
     hash1.merge(hash2) do |_key, old_value, new_value|
@@ -24,7 +25,7 @@ class MergeTask < TaskHelper
            deep_merge: false,
            **_kwargs)
     result = {}
-    if hashes.length == 0
+    if hashes.length.zero?
       result = nil
     elsif hashes.length == 1
       result = hashes[0]
