@@ -7,6 +7,12 @@ All notable changes to this project will be documented in this file.
 - Switch from Travis to GitHub Actions
 
   Contributed by Nick Maludy (@nmaludy)
+  
+- Added a new task `inventory_utils::merge` to merge an array of hashes
+  This is super useful in inventory files where you need to resolve/merge configs
+  at different layers. Deep merge can be achieved by passing in the `deep_merge: true` parameter.
+
+  Contributed by Nick Maludy (@nmaludy)
 
 ## Release 0.3.1 (2020-09-15)
 

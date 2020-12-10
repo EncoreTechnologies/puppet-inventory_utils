@@ -13,6 +13,31 @@ Module that contains a lot of helpful Bolt tasks designed for use in dynamic inv
 
 ## Usage
 
+### inventory_utils::deep_merge
+
+If you ever find yourself needing to merge some hashes in your inventory file, this is the 
+task for you! Perfect for working with YAML / JSON files containing targets, config, data, etc.
+
+``` yaml
+version: 2
+config:
+  _plugin: task
+  task: inventory_utils::merge
+  parameters:
+    hashes:
+      - _plugin: yaml
+        filepath: ../inventory-defaults.yaml
+      - _plugin: yaml
+        filepath: inventory-overrides.yaml
+```
+
+#### Deep mergeing
+
+Deep merging (same as `stdlib`'s [`deep_merge()`](https://github.com/puppetlabs/puppetlabs-stdlib/blob/master/REFERENCE.md#deep_merge)
+function) can be accomplished by passing in the `deep_merge: true` parameter to the task.
+This recursively merges any nested hashes.
+
+
 ### inventory_utils::erb_template
 
 It is sometimes necessary to dynamically render things at various points in your inventory
@@ -288,3 +313,232 @@ Only the following keys can be specified in the `group_configs` hash:
  - `facts`
  - `features`
  - `vars`
+
+
+# Example Inventory
+
+This is an example inventory that we use internally (sanitized of course):
+It is provided as a reference to showcase lots of "cool" things you can do within
+the inventory file using the `inventory_utils` module:
+
+```yaml
+---
+version: 2
+
+config:
+  _plugin: task
+  task: inventory_utils::merge
+  parameters:
+    deep_merge: true
+    hashes:
+      - _plugin: yaml
+        filepath: ../inventory-config.yaml
+      - winrm:
+          user: svc_bolt_windows@domain.tld
+          password:
+            _plugin: pkcs7
+            encrypted_value: >
+              ENC[PKCS7,xxx]
+
+vars:
+  patching_monitoring_target: 'solarwinds'
+  patching_snapshot_delete: true
+  vsphere_host: vsphere.domain.tld
+  vsphere_username: svc_bolt_vsphere@domain.tld
+  vsphere_password:
+    _plugin: pkcs7
+    encrypted_value: >
+      ENC[PKCS7,xxx]
+  vsphere_datacenter: datacenter1
+  vsphere_insecure: true
+
+groups:
+  - name: solarwinds
+    config:
+      transport: remote
+      remote:
+        port: 17778
+        username: 'domain\svc_bolt_solarwinds'
+        password:
+          _plugin: pkcs7
+          encrypted_value: >
+            ENC[PKCS7,xxx]
+
+    targets:
+      - solarwinds.domain.tld
+
+  - name: puppetdb_linux
+    config:
+      transport: ssh
+    targets:
+      - _plugin: puppetdb
+        query: "inventory[certname] { facts.osfamily != 'windows' order by certname }"
+
+  - name: puppetdb_windows
+    config:
+      transport: winrm
+    vars:
+      patching_reboot_strategy: 'always'
+    groups:
+      - _plugin: task
+        task: inventory_utils::group_by
+        parameters:
+          key: 'facts.domain'
+          group_name_prefix: puppetdb_windows_
+          group_configs:
+            # servers in otherdomain.tld use a different account to login
+            # to faciliate this we group by domain name and assign all hosts
+            # with otherdomain.tld a different account to login
+            puppetdb_windows_otherdomain_tld:
+              config:
+                winrm:
+                  user: svc_bolt_windows@otherdomain.tld
+                  password:
+                    _plugin: pkcs7
+                    encrypted_value: >
+                      ENC[PKCS7,xxx]
+          targets:
+            _plugin: puppetdb
+            query: "inventory[certname, facts.domain] { facts.osfamily = 'windows' order by certname }"
+            target_mapping:
+              name: certname
+              uri: certname
+              facts:
+                domain: facts.domain
+
+  - name: puppetdb_patching_linux
+    config:
+      transport: ssh
+    groups:
+      - _plugin: task
+        task: inventory_utils::group_by
+        parameters:
+          key: 'facts.patching_group'
+          group_name_prefix: puppetdb_patching_
+          targets:
+            _plugin: puppetdb
+            query: "inventory[certname, facts.patching_group] { facts.osfamily != 'windows' order by certname }"
+            target_mapping:
+              name: certname
+              uri: certname
+              facts:
+                patching_group: facts.patching_group
+
+  - name: puppetdb_patching_windows
+    config:
+      transport: winrm
+    vars:
+      patching_reboot_strategy: 'always'
+    groups:
+      - _plugin: task
+        task: inventory_utils::group_by
+        parameters:
+          key: 'facts.patching_group'
+          group_name_prefix: puppetdb_patching_windows_
+          group_configs:
+            # the special 'no_snapshot_a' and 'no_snapshot_b' groups are exactly the same
+            # except we don't want to do VMware snapshots on them because they are
+            # for example in Hyper-V or Google Cloud
+            puppetdb_patching_windows_no_snapshot_a:
+              vars:
+                patching_snapshot_plan: 'disabled'
+                patching_snapshot_create: false
+                patching_snapshot_delete: false
+            puppetdb_patching_windows_no_snapshot_b:
+              vars:
+                patching_snapshot_plan: 'disabled'
+                patching_snapshot_create: false
+                patching_snapshot_delete: false
+          targets:
+            _plugin: puppetdb
+            query: "inventory[certname, facts.patching_group] { facts.osfamily = 'windows' order by certname }"
+            target_mapping:
+              name: certname
+              uri: certname
+              facts:
+                patching_group: facts.patching_group
+
+
+  - name: puppetdb_unreported
+    groups:
+      - name: puppetdb_unreported_linux
+        config:
+          transport: ssh
+        targets:
+          - _plugin: puppetdb
+            query:
+              _plugin: task
+              task: inventory_utils::erb_template
+              parameters:
+                template: 'nodes[certname] { facts { name = "osfamily" and value != "windows" } and ((report_timestamp is null) or (report_timestamp < "<%= (Time.now - (3*60*60)).iso8601 %>")) order by certname }'
+    
+      - name: puppetdb_unreported_windows
+        config:
+          transport: winrm
+        vars:
+          patching_reboot_strategy: 'always'
+        targets:
+          - _plugin: puppetdb
+            query:
+              _plugin: task
+              task: inventory_utils::erb_template
+              parameters:
+                template: 'nodes[certname] { facts { name = "osfamily" and value = "windows" } and ((report_timestamp is null) or (report_timestamp < "<%= (Time.now - (3*60*60)).iso8601 %>")) order by certname }'
+
+
+  - name: puppetdb_failed
+    groups:
+      - name: puppetdb_failed_linux
+        config:
+          transport: winrm
+        vars:
+          patching_reboot_strategy: 'always'
+        targets:
+          - _plugin: puppetdb
+            query: 'nodes[certname] { facts { name = "osfamily" and value != "windows" } and latest_report_status = "failed" order by certname }'
+            target_mapping:
+              name: certname
+              uri: certname
+    
+      - name: puppetdb_failed_windows
+        config:
+          transport: winrm
+        vars:
+          patching_reboot_strategy: 'always'
+        targets:
+          - _plugin: puppetdb
+            query: 'nodes[certname] { facts { name = "osfamily" and value = "windows" } and latest_report_status = "failed" order by certname }'
+            target_mapping:
+              name: certname
+              uri: certname
+
+  - name: wsus
+    config:
+      transport: winrm
+    vars:
+      patching_reboot_strategy: 'always'
+    groups:
+      - _plugin: task
+        task: inventory_utils::group_configs
+        parameters:
+          group_configs:
+            # don't snapshot Hyper-V hosts
+            wsus_servers_hv:
+              vars:
+                patching_reboot_strategy: 'always'
+                patching_snapshot_plan: 'disabled'
+                patching_snapshot_create: false
+                patching_snapshot_delete: false
+          groups:
+            _plugin: wsus_inventory
+            host: 'wsussql.domain.tld'
+            database: 'SUSDB'
+            username: domain\svc_bolt_wsussql'
+            password:
+              _plugin: pkcs7
+              encrypted_value: >
+                ENC[PKCS7,xxx]
+            format: 'groups'
+            filter_older_than_days: 1
+            group_name_prefix: 'wsus_'
+```
