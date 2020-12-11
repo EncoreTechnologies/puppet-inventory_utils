@@ -1,0 +1,11 @@
+{
+  "description": "Returns the path to the first file that exists in the list of paths",
+  "files": ["ruby_task_helper/files/task_helper.rb"],
+  "input_method": "stdin",
+  "parameters": {
+    "paths": {
+      "description": "List of file path strings to check. The first file path that exists will be returned.",
+      "type": "Array[String]"
+    }
+  }
+}
