@@ -4,6 +4,12 @@ All notable changes to this project will be documented in this file.
 
 ## Development
 
+## Release 0.4.1 (2020-12-11)
+
+- Fixing GitHub Actions deployment.
+
+  Contributed by Nick Maludy (@nmaludy)
+
 ## Release 0.4.0 (2020-12-10)
 
 - Switch from Travis to GitHub Actions
