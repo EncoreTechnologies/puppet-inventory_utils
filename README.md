@@ -314,6 +314,37 @@ Only the following keys can be specified in the `group_configs` hash:
  - `features`
  - `vars`
 
+### inventory_utils::pick_paths
+
+There are times where you might not know where a file is going to exist, potentially
+to support cross-platform bolt configs, etc. In this case we can use the 
+`inventory_utils::pick_paths` plugin task. You provide it a list of paths and it will 
+try to resolve each path then return the name of the file of the first path that exists.
+If no paths exist, it will return `null`.
+
+Example in `bolt-project.yaml` we may want to allow developers to put their PKCS7 keys
+in their home directory, meanwhile allowing a server to store the PKCS7 keys in
+`/etc/puppetlabs` like normal:
+
+```yaml
+plugins:
+  pkcs7:
+    public_key:
+      _plugin: task
+      task: inventory_utils::pick_path
+      parameters:
+        paths:
+          - ~/.puppetlabs/bolt/public_key.pkcs7.pem
+          - /etc/puppetlabs/puppet/keys/public_key.pkcs7.pem
+    private_key: 
+      _plugin: task
+      task: inventory_utils::pick_path
+      parameters:
+        paths:
+          - ~/.puppetlabs/bolt/public_key.pkcs7.pem
+          - /etc/puppetlabs/puppet/keys/private_key.pkcs7.pem
+
+```
 
 # Example Inventory
 

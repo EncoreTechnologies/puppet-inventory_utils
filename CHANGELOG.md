@@ -4,6 +4,13 @@ All notable changes to this project will be documented in this file.
 
 ## Development
 
+## Release 0.5.0 (2020-12-11)
+
+- Added new task `inventory_utils::pick_path` that will return the name of the first
+  file that exists in a list of paths.
+
+  Contributed by Nick Maludy (@nmaludy)
+
 ## Release 0.4.1 (2020-12-11)
 
 - Fixing GitHub Actions deployment.
